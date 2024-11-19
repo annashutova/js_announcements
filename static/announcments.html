@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Объявления</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <!-- Навигационная панель -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-light mb-4">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/">Объявления</a>
+            <div class="d-flex">
+                <a href="/create-announcement" class="btn btn-outline-success me-2">Создать объявление</a>
+                <a id="userAnnouncementsLink" class="btn btn-outline-primary" href="#">Ваши объявления</a>
+                <a id="logoutLink" class="btn btn-outline-danger me-2" href="#">Выход</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container py-5">
+        <h1 class="mb-4">Объявления</h1>
+
+        <!-- Фильтр по категориям -->
+        <div class="mb-4">
+            <label for="categoryFilter" class="form-label">Фильтр по категориям</label>
+            <select id="categoryFilter" class="form-select">
+                <option value="">Все категории</option>
+            </select>
+        </div>
+
+        <!-- Список объявлений -->
+        <div id="announcements" class="row gy-3"></div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const fetchedCurrentUserId = localStorage.getItem('currentUserId');
+        const currentUserId = parseInt(fetchedCurrentUserId, 10);
+        if (!currentUserId) window.location.href = '/login';
+
+        // Обработка ссылки "Ваши объявления"
+        document.getElementById('userAnnouncementsLink').addEventListener('click', (event) => {
+            event.preventDefault(); // Предотвращает переход по ссылке, если нет currentUserId
+
+            window.location.href = `/user-announcments`;
+        });
+
+
+        // Обработка выхода из аккаунта
+        document.getElementById('logoutLink').addEventListener('click', async (event) => {
+            event.preventDefault();
+            try {
+                // Отправляем запрос на сервер для завершения сессии
+                const response = await fetch('/logout');
+
+                if (response.ok) {
+                    // Очищаем данные в localStorage и переходим на страницу входа
+                    localStorage.removeItem('currentUserId');
+                    window.location.href = '/login';
+                } else {
+                    alert('Не удалось выйти из аккаунта. Попробуйте снова.');
+                }
+            } catch (error) {
+                console.error('Ошибка при выходе:', error);
+                alert('Произошла ошибка. Попробуйте позже.');
+            }
+        });
+
+        // Получение категорий и заполнение фильтра
+        async function loadCategories() {
+            try {
+                const response = await fetch('/categories');
+                if (!response.ok) {
+                    throw new Error('Не удалось получить категории.');
+                }
+                const categories = await response.json();
+                const categoryFilter = document.getElementById('categoryFilter');
+                categories.forEach(category => {
+                    const option = document.createElement('option');
+                    option.value = category.title;
+                    option.textContent = category.title;
+                    categoryFilter.appendChild(option);
+                });
+            } catch (error) {
+                console.error('Ошибка при получении категорий:', error);
+            }
+        }
+
+        // Отправка отклика/отмены отклика
+        async function toggleResponse(announcementId, active) {
+            try {
+                const response = await fetch(`/announcments/${announcementId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ active }),
+                });
+                if (!response.ok) {
+                    throw new Error('Ошибка при отклике на объявление.');
+                }
+                await loadAnnouncements(); // Перезагружаем список объявлений
+            } catch (error) {
+                console.error('Ошибка при отклике:', error);
+            }
+        }
+
+        // Получение объявлений и их отображение
+        async function loadAnnouncements(category = '') {
+            try {
+                let url = '/announcments'
+                if (category != '') {
+                    url += `?category=${encodeURIComponent(category)}`
+                }
+
+                const response = await fetch(url);
+                if (!response.ok) {
+                    throw new Error('Не удалось получить объявления');
+                }
+                const announcements = await response.json();
+                const announcementsContainer = document.getElementById('announcements');
+                announcementsContainer.innerHTML = '';
+
+                if (announcements.length === 0) {
+                    announcementsContainer.innerHTML = '<p>Объявлений пока нет.</p>';
+                    return;
+                }
+
+                announcements.forEach(announcement => {
+                    const col = document.createElement('div');
+                    col.classList.add('col-md-4');
+
+                    const card = document.createElement('div');
+                    card.classList.add('card', 'shadow-sm', 'h-100');
+
+                    const cardBody = document.createElement('div');
+                    cardBody.classList.add('card-body');
+
+                    const title = document.createElement('h5');
+                    title.classList.add('card-title');
+                    title.textContent = announcement.title;
+
+                    const description = document.createElement('p');
+                    description.classList.add('card-text');
+                    description.textContent = announcement.description;
+
+                    const category = document.createElement('p');
+                    category.classList.add('card-text', 'text-muted');
+                    category.textContent = `Категория: ${announcement.category.title}`;
+
+                    const createdAt = document.createElement('p');
+                    createdAt.classList.add('card-text', 'text-muted');
+                    createdAt.textContent = `Создано: ${new Date(announcement.created_at).toLocaleString()}`;
+
+                    cardBody.appendChild(title);
+                    cardBody.appendChild(description);
+                    cardBody.appendChild(category);
+                    cardBody.appendChild(createdAt);
+
+                    // Добавляем кнопку "Откликнуться" или "Отменить"
+                    if (announcement.authorId !== currentUserId) { // Скрываем кнопку для создателя объявления
+                        const button = document.createElement('button');
+                        button.classList.add('btn', 'w-100', announcement.respondentId === currentUserId ? 'btn-danger' : 'btn-primary');
+                        button.textContent = announcement.respondentId === currentUserId ? 'Отменить отклик' : 'Откликнуться';
+                        button.addEventListener('click', () => toggleResponse(announcement.id, announcement.respondentId === currentUserId));
+                        cardBody.appendChild(button);
+                    } else { // Добавляем значок "Ваше объявление" для авторских объявлений
+                        const badge = document.createElement('span');
+                        badge.classList.add('badge', 'bg-success', 'mb-2');
+                        badge.textContent = 'Ваше объявление';
+                        cardBody.appendChild(badge);
+
+                    }
+
+                    card.appendChild(cardBody);
+                    col.appendChild(card);
+                    announcementsContainer.appendChild(col);
+                });
+            } catch (error) {
+                console.error('Не удалось загрузить объявления:', error);
+            }
+        }
+
+        // Инициализация страницы
+        async function init() {
+            await loadCategories();
+            await loadAnnouncements();
+
+            const categoryFilter = document.getElementById('categoryFilter');
+            categoryFilter.addEventListener('change', () => {
+                const selectedCategory = categoryFilter.value;
+                loadAnnouncements(selectedCategory);
+            });
+        }
+
+        // Запуск
+        init();
+    </script>
+</body>
+</html>

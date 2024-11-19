@@ -1,0 +1,26 @@
+{
+  "name": "announcments",
+  "type": "module",
+  "version": "1.0.0",
+  "description": "Online announcments app",
+  "main": "app.js",
+  "prisma": {
+    "seed": "node prisma/seed.js"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Anna Shutova",
+  "license": "ISC",
+  "dependencies": {
+    "@prisma/client": "^5.21.1",
+    "bcrypt": "^5.1.1",
+    "body-parser": "^1.20.3",
+    "dotenv": "^16.4.5",
+    "express": "^4.21.1",
+    "express-session": "^1.18.1",
+    "latest": "^0.2.0",
+    "n": "^10.0.0",
+    "prisma": "^5.21.1"
+  }
+}

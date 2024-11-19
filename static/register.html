@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Регистрация</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container d-flex justify-content-center align-items-center vh-100">
+        <div class="card p-4 shadow-sm" style="width: 100%; max-width: 400px;">
+            <h1 class="text-center mb-4">Регистрация</h1>
+            <!-- Блок для отображения ошибок -->
+            <div id="error-message" class="alert alert-danger d-none" role="alert"></div>
+
+            <!-- Форма регистрации -->
+            <form id="register-form">
+                <div class="mb-3">
+                    <label for="firstName" class="form-label">Имя</label>
+                    <input type="text" class="form-control" id="firstName" name="firstName" placeholder="Введите свое имя" required>
+                </div>
+                <div class="mb-3">
+                    <label for="lastName" class="form-label">Фамилия</label>
+                    <input type="text" class="form-control" id="lastName" name="lastName" placeholder="Введите свою фамилию" required>
+                </div>
+                <div class="mb-3">
+                    <label for="phone" class="form-label">Номер телефона</label>
+                    <input type="text" class="form-control" id="phone" name="phone" placeholder="Введите свой номер телефона" required>
+                </div>
+                <div class="mb-3">
+                    <label for="password" class="form-label">Пароль</label>
+                    <input type="password" class="form-control" id="password" name="password" placeholder="Введите пароль" required>
+                </div>
+                <button type="submit" class="btn btn-primary w-100">Регистрация</button>
+            </form>
+            <div class="text-center mt-3">
+                <p>Уже есть аккаунт? <a href="/login">Войти</a></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Обработчик отправки формы
+        document.getElementById('register-form').addEventListener('submit', async function (event) {
+            event.preventDefault(); // Предотвращаем стандартное поведение формы
+
+            // Получение данных из формы
+            const firstName = document.getElementById('firstName').value;
+            const lastName = document.getElementById('lastName').value;
+            const phone = document.getElementById('phone').value;
+            const password = document.getElementById('password').value;
+
+            // Отправка запроса на сервер
+            try {
+                const response = await fetch('/register', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ firstName, lastName, phone, password }),
+                });
+
+                // Обработка ответа от сервера
+                const data = await response.json();
+
+                if (!response.ok) {
+                    // Если ошибка, показываем сообщение
+                    const errorMessage = document.getElementById('error-message');
+                    errorMessage.textContent = data.message || 'Неизвестная ошибка.';
+                    errorMessage.classList.remove('d-none');
+                } else {
+                    // При успешной регистрации перенаправляем пользователя
+                    window.location.href = '/login';
+                }
+            } catch (error) {
+                // Обработка сетевых ошибок
+                const errorMessage = document.getElementById('error-message');
+                errorMessage.textContent = 'Не удалось подключиться к серверу.';
+                errorMessage.classList.remove('d-none');
+            }
+        });
+    </script>
+</body>
+</html>

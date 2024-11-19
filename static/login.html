@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Вход</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container d-flex justify-content-center align-items-center vh-100">
+        <div class="card p-4 shadow-sm" style="width: 100%; max-width: 400px;">
+            <h1 class="text-center mb-4">Вход</h1>
+            <!-- Блок для отображения ошибок -->
+            <div id="error-message" class="alert alert-danger d-none" role="alert"></div>
+
+            <!-- Форма авторизации -->
+            <form id="login-form">
+                <div class="mb-3">
+                    <label for="phone" class="form-label">Номер телефона</label>
+                    <input type="text" class="form-control" id="phone" name="phone" placeholder="Введите свой номер" required>
+                </div>
+                <div class="mb-3">
+                    <label for="password" class="form-label">Пароль</label>
+                    <input type="password" class="form-control" id="password" name="password" placeholder="Введите пароль" required>
+                </div>
+                <button type="submit" class="btn btn-primary w-100">Вход</button>
+            </form>
+            <div class="text-center mt-3">
+                <p>Нет аккаунта? <a href="/register">Регистрация</a></p>
+            </div>
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Обработчик отправки формы
+        document.getElementById('login-form').addEventListener('submit', async function (event) {
+            event.preventDefault(); // Предотвращаем стандартное поведение формы
+
+            // Получение данных из формы
+            const phone = document.getElementById('phone').value;
+            const password = document.getElementById('password').value;
+
+            // Отправка запроса на сервер
+            try {
+                const response = await fetch('/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ phone, password }),
+                });
+
+                // Получение ответа от сервера
+                const data = await response.json();
+
+                if (!response.ok) {
+                    // Если ошибка, показываем сообщение
+                    const errorMessage = document.getElementById('error-message');
+                    errorMessage.textContent = data.message || 'Неизвестная ошибка.';
+                    errorMessage.classList.remove('d-none');
+                } else {
+                    // Сохраняем ID пользователя в localStorage
+                    localStorage.setItem('currentUserId', data.object.id)
+                    // При успешной авторизации перенаправляем пользователя
+                    window.location.href = '/';
+                }
+            } catch (error) {
+                // Обработка сетевых ошибок
+                const errorMessage = document.getElementById('error-message');
+                errorMessage.textContent = 'Не удалось подключиться к серверу.';
+                errorMessage.classList.remove('d-none');
+            }
+        });
+    </script>
+</body>
+</html>
