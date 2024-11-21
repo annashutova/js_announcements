@@ -13,6 +13,14 @@ export const indexPage = async function (req, res) {
     res.sendFile(path.join(__dirname, '../static/admin/index.html'))
 }
 
+export const editUserPage = async function (req, res) {
+    res.sendFile(path.join(__dirname, '../static/admin/user-edit-page.html'))
+}
+
+export const createUserPage = async function (req, res) {
+    res.sendFile(path.join(__dirname, '../static/admin/user-create-page.html'))
+}
+
 export const getUsers = async function (req, res) {
     try{
         const users = await prisma.user.findMany()
@@ -92,6 +100,9 @@ export const updateUser = async function (req, res) {
         }
 
         const updatedUser = await prisma.user.update({
+            where: {
+                id: id,
+            },
             data: {
                 first_name: firstName,
                 last_name: lastName,

@@ -128,14 +128,14 @@
 
                 if (!response.ok) {
                     alert(await response.text());
+                    return
                 }
-                const result = await response.json();
 
-                alert('Объявление успешно обновлено!');
+                alert('Объявление успешно добавлено!');
                 window.location.href = '/admin'; // Перенаправляем на главную страницу после успешного обновления
             } catch (error) {
                 console.error(error);
-                alert('Ошибка при обновлении объявления');
+                alert('Ошибка при добавлении объявления');
             }
         }
 

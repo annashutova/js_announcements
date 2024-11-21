@@ -1,5 +1,35 @@
 import prisma from '../db/client.js'
+import path from 'path'
+import { fileURLToPath } from 'url'
 
+
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
+
+export const editCategoryPage = async function (req, res) {
+    res.sendFile(path.join(__dirname, '../static/admin/category-edit-page.html'))
+}
+
+export const createCategoryPage = async function (req, res) {
+    res.sendFile(path.join(__dirname, '../static/admin/category-create-page.html'))
+}
+
+export const getCategoryById = async function (req, res) {
+    const { title } = req.body
+
+    try {
+        await prisma.category.create({
+            data: {
+                title: title,
+            }
+        })
+
+        return res.status(201).send('Категория успешно создана.')
+    } catch (err) {
+        console.error(err)
+        res.status(500).send('Ошибка при создании категории.')
+    }
+}
 
 export const postCategory = async function (req, res) {
     const { title } = req.body

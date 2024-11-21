@@ -163,8 +163,8 @@
 
                 if (!response.ok) {
                     alert(await response.text());
+                    return
                 }
-                const result = await response.json();
 
                 alert('Объявление успешно обновлено!');
                 window.location.href = '/admin'; // Перенаправляем на главную страницу после успешного обновления

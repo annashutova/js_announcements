@@ -27,15 +27,9 @@ export const postAnnouncment = async function (req, res) {
                 title: title,
                 description: description,
                 active: active,
-                author: {
-                    connect: { id: authorId }
-                },
-                category: {
-                    connect: { id: categoryId }
-                },
-                respondent: {
-                    connect: { id: respondentId }
-                }
+                authorId: authorId,
+                categoryId: categoryId,
+                respondentId: respondentId,
             }
         })
         return res.status(201).send({
