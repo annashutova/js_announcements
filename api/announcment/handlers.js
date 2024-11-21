@@ -1,50 +1,57 @@
 import path from 'path'
 import { fileURLToPath } from 'url'
-import express from 'express'
-import prisma from '../db/client.js'
-import { checkAuth } from './auth.js'
+import prisma from '../../db/client.js'
 
-const router = express.Router()
+
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 
 
-router.get('/', checkAuth, (req, res) => {
-    res.sendFile(path.join(__dirname, '../static/announcments.html'))
-})
+export const indexPage = async function (req, res) {
+    res.sendFile(path.join(__dirname, '../../static/announcments.html'))
+}
 
-router.get('/user-announcments', checkAuth, (req, res) => {
-    res.sendFile(path.join(__dirname, '../static/user-announcments.html'))
-})
+export const userAnnouncmentPage = async function (req, res) {
+    res.sendFile(path.join(__dirname, '../../static/user-announcments.html'))
+}
 
-router.get('/create-announcement', checkAuth, (req, res) => {
-    res.sendFile(path.join(__dirname, '../static/create-announcement.html'))
-})
+export const createAnnouncmentPage = async function (req, res) {
+    res.sendFile(path.join(__dirname, '../../static/create-announcement.html'))
+}
 
-router.get('/edit-announcment', checkAuth, (req, res) => {
-    res.sendFile(path.join(__dirname, '../static/edit-announcement.html'))
-})
+export const editAnnouncmentPage = async function (req, res) {
+    res.sendFile(path.join(__dirname, '../../static/edit-announcement.html'))
+}
 
-router.get('/announcments', checkAuth, async (req, res) => {
+export const getAnnouncments = async function (req, res) {
     const category = req.query.category
-    let activity = true
 
-    if (req.session.user.role === 'ADMIN') {
-        activity = undefined
+    let query = {
+        where: {
+            OR: [
+                {
+                    active: true,
+                },
+                {
+                    respondentId: req.session.user.id,
+                }
+            ],
+            category: {
+                title: category,
+            },
+        },
+        include: {
+            category: true,
+        },
+        orderBy: [
+            { active:  'desc'},
+            { created_at: 'desc' },
+        ],
     }
 
-    try {
-
-        const announcments = await prisma.announcment.findMany({
+    if (req.session.user.role === 'ADMIN') {
+        query = {
             where: {
-                OR: [
-                    {
-                        active: activity,
-                    },
-                    {
-                        respondentId: req.session.user.id,
-                    }
-                ],
                 category: {
                     title: category,
                 },
@@ -56,16 +63,21 @@ router.get('/announcments', checkAuth, async (req, res) => {
                 { active:  'desc'},
                 { created_at: 'desc' },
             ],
-        })
+        }
+    }
+
+    try {
+
+        const announcments = await prisma.announcment.findMany(query)
 
         res.json(announcments)
     } catch (err) {
         console.error(err)
         res.status(500).send('Ошибка при получении объявлений.')
     }
-})
+}
 
-router.get('/announcment_byId/:id', checkAuth, async (req, res) => {
+export const getAnnouncmentById = async function (req, res) {
     let { id } = req.params
     id = Number(id)
 
@@ -93,9 +105,9 @@ router.get('/announcment_byId/:id', checkAuth, async (req, res) => {
         console.error(err)
         res.status(500).send('Ошибка при получении объявления.')
     }
-})
+}
 
-router.get('/announcments/:userId', checkAuth, async (req, res) => {
+export const getAnnouncmentByUserId = async function (req, res) {
     const category = req.query.category
     let { userId } = req.params
     userId = Number(userId)
@@ -131,9 +143,9 @@ router.get('/announcments/:userId', checkAuth, async (req, res) => {
         console.error(err)
         res.status(500).send('Ошибка при получении объявлений.')
     }
-})
+}
 
-router.post('/announcments', checkAuth, async (req, res) => {
+export const postAnnouncment = async function (req, res) {
     const {title, description, categoryId} = req.body
 
     try {
@@ -158,10 +170,9 @@ router.post('/announcments', checkAuth, async (req, res) => {
         console.error(err)
         res.status(500).send('Ошибка при создании объявления.')
     }
-})
+}
 
-// отклик делается отдельно (не через put), чтобы избежать кучи проверок на наличие данных
-router.post('/announcments/:id', checkAuth, async (req, res) => {
+export const respondToAnnouncment = async function (req, res) {
     let { id } = req.params
     const { active } = req.body
     id = Number(id)
@@ -222,9 +233,9 @@ router.post('/announcments/:id', checkAuth, async (req, res) => {
         console.error(err)
         res.status(500).send('Ошибка при отклике на объявление.')
     }
-})
+}
 
-router.put('/announcments/:id', checkAuth, async (req, res) => {
+export const updateAnnouncment = async function (req, res) {
     const { title, description, active, categoryId } = req.body
     let { id } = req.params
     id = Number(id)
@@ -240,7 +251,7 @@ router.put('/announcments/:id', checkAuth, async (req, res) => {
             }
         })
         if (!category) {
-            return res.status(404).send(`Категории с id = ${id} не найдено.`)
+            return res.status(404).send(`Категории с id = ${categoryId} не найдено.`)
         }
 
         const announcment = await prisma.announcment.findUnique({
@@ -277,9 +288,9 @@ router.put('/announcments/:id', checkAuth, async (req, res) => {
         console.error(err)
         res.status(500).send('Ошибка при обновлении объявления.')
     }
-})
+}
 
-router.delete('/announcments/:id', checkAuth, async (req, res) => {
+export const deleteAnnouncment = async function (req, res) {
     let { id } = req.params
     id = Number(id)
 
@@ -313,6 +324,4 @@ router.delete('/announcments/:id', checkAuth, async (req, res) => {
         console.error(err)
         res.status(500).send('Ошибка при удалении объявления.')
     }
-})
-
-export default router
+}

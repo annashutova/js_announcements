@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Создание Объявления</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet" />
+</head>
+
+<body>
+    <div class="container py-5">
+        <h1 class="mb-4">Создание объявления</h1>
+
+        <form id="createAnnouncementForm">
+            <div class="mb-3">
+                <label for="title" class="form-label">Заголовок</label>
+                <input type="text" class="form-control" id="title" required>
+            </div>
+            <div class="mb-3">
+                <label for="description" class="form-label">Описание</label>
+                <textarea class="form-control" id="description" required></textarea>
+            </div>
+            <div class="mb-3">
+                <label for="category" class="form-label">Категория</label>
+                <select class="form-select" id="category" required>
+                    <option value="">Выберите категорию</option>
+                    <!-- Категории будут добавляться динамически -->
+                </select>
+            </div>
+            <div class="mb-3">
+                <label for="author" class="form-label">Автор</label>
+                <select class="form-select" id="author" required>
+                    <option value="">Выберите пользователя</option>
+                    <!-- Пользователи будут добавляться динамически -->
+                </select>
+            </div>
+            <div class="mb-3">
+                <label for="respondent" class="form-label">Откликнувшийся</label>
+                <select class="form-select" id="respondent">
+                    <option value="">Выберите пользователя</option>
+                    <!-- Пользователи будут добавляться динамически -->
+                </select>
+            </div>
+            <div class="mb-3">
+                <label for="active" class="form-label">Активность объявления</label>
+                <select class="form-select" id="active" required>
+                    <option value="true">Активно</option>
+                    <option value="false">Неактивно</option>
+                </select>
+            </div>
+            <button type="submit" class="btn btn-primary">Сохранить</button>
+            <a href="/admin" class="btn btn-secondary ms-2">Отмена</a>
+        </form>
+    </div>
+
+    <script>
+        async function loadData() {
+            try {
+                const response = await fetch('/categories');
+                if (!response.ok) {
+                    throw new Error('Ошибка при загрузке категорий');
+                }
+                const categories = await response.json();
+                const categorySelect = document.getElementById('category');
+
+                categories.forEach(category => {
+                    const option = document.createElement('option');
+                    option.value = category.id;
+                    option.textContent = category.title;
+                    categorySelect.appendChild(option);
+                });
+            } catch (error) {
+                console.error('Ошибка при загрузке категорий:', error);
+            }
+
+            try {
+                // Заполняем выпадающий список пользователей
+                const authorSelect = document.getElementById('author');
+                const respondentSelect = document.getElementById('respondent');
+                
+                // Данные пользователей должны быть на сервере, получаем их
+                const usersResponse = await fetch('/admin/users');
+                if (!usersResponse.ok) {
+                    throw new Error('Не удалось загрузить полльзователей');
+                }
+                const users = await usersResponse.json();
+
+                users.forEach(user => {
+                    const authorOption = document.createElement('option');
+                    authorOption.value = user.id;
+                    authorOption.textContent = `${user.first_name} ${user.last_name} ${user.phone}`;
+
+                    const respondentOption = document.createElement('option');
+                    respondentOption.value = user.id;
+                    respondentOption.textContent = `${user.first_name} ${user.last_name} ${user.phone}`;
+
+                    authorSelect.appendChild(authorOption);
+                    respondentSelect.appendChild(respondentOption);
+                });
+            } catch (error) {
+                console.error('Ошибка при загрузке пользоватеелй:', error);
+            }
+        }
+
+        // Функция для отправки объявления на сервер
+        async function createAnnouncement(event) {
+            event.preventDefault(); // Отменяем стандартное поведение формы
+
+            const data = {
+                title: document.getElementById('title').value,
+                description: document.getElementById('description').value,
+                categoryId: parseInt(document.getElementById('category').value),
+                authorId: parseInt(document.getElementById('author').value),
+                respondentId: parseInt(document.getElementById('respondent').value),
+                active: document.getElementById('active').value === 'true',
+            };
+
+            try {
+                // Отправляем запрос на сервер для обновления данных
+                const response = await fetch(`/admin/announcments`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data),
+                });
+
+                if (!response.ok) {
+                    alert(await response.text());
+                }
+                const result = await response.json();
+
+                alert('Объявление успешно обновлено!');
+                window.location.href = '/admin'; // Перенаправляем на главную страницу после успешного обновления
+            } catch (error) {
+                console.error(error);
+                alert('Ошибка при обновлении объявления');
+            }
+        }
+
+        // Добавляем обработчик формы на отправку
+        document.getElementById('createAnnouncementForm').addEventListener('submit', createAnnouncement);
+
+        // Загружаем данные при загрузке страницы
+        window.addEventListener('DOMContentLoaded', loadData);
+    </script>
+</body>
+
+</html>

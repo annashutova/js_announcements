@@ -4,10 +4,11 @@ import path from "path"
 import dotenv from 'dotenv'
 import bodyParser from "body-parser"
 import { fileURLToPath } from "url"
-import authRoutes from './routes/auth.js'
-import announceRoutes from './routes/announcment.js'
-import categoryRoutes from './routes/category.js'
-import userRouter from './routes/user.js'
+import authRoutes from './api/auth/router.js'
+import announceRoutes from './api/announcment/router.js'
+import categoryRoutes from './api/category/router.js'
+import userRouter from './api/user/router.js'
+import adminRouter from './admin/router.js'
 
 
 const __filename = fileURLToPath(import.meta.url)
@@ -37,7 +38,10 @@ app.use('/', authRoutes)
 app.use('/', announceRoutes)
 app.use('/', categoryRoutes)
 app.use('/', userRouter)
+app.use('/admin', adminRouter)
 
 app.listen(PORT, () => {
     console.log(`Сервер запущен на http://localhost:${PORT}`)
 })
+
+export default app

@@ -1,17 +1,19 @@
 import path from 'path'
 import { fileURLToPath } from 'url'
-import express from 'express'
 import prisma from '../db/client.js'
-import { checkAuth, isAdminAuth } from './auth.js'
 import validatePhone from '../validators/phone.js'
 import { hashPassword } from '../utils/hash.js'
 
-const router = express.Router()
+
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 
 
-router.get('/users', isAdminAuth, async (req, res) => {
+export const indexPage = async function (req, res) {
+    res.sendFile(path.join(__dirname, '../static/admin/index.html'))
+}
+
+export const getUsers = async function (req, res) {
     try{
         const users = await prisma.user.findMany()
         res.json(users)
@@ -19,39 +21,9 @@ router.get('/users', isAdminAuth, async (req, res) => {
         console.error(err)
         res.status(500).send('Ошибка при получении пользователей.')
     }
-})
+}
 
-router.get('/users/:id', checkAuth, async (req, res) => {
-    let { id } = req.params
-    id = Number(id)
-
-    if (isNaN(id)) {
-        return res.status(400).send('id должно быть числом.')
-    }
-
-    if (id !== req.session.user.id && req.session.user.role !== 'ADMIN') {
-        return res.status(403).send('У вас нет доступа к данной странице.')
-    }
-
-    try{
-        const user = await prisma.user.findUnique({
-            where: {
-                id: id,
-            },
-        })
-
-        if (!user) {
-            return res.status(404).send(`Пользователь с id = ${id} не найден.`)
-        }
-
-        res.json(user)
-    } catch (err) {
-        console.error(err)
-        res.status(500).send('Ошибка при получении пользователя.')
-    }
-})
-
-router.post('/users', isAdminAuth, async (req, res) => {
+export const postUser = async function (req, res) {
     const { firstName, lastName, phone, password, role } = req.body
     const hashedPswd = await hashPassword(password)
     if (!hashPassword) {
@@ -89,9 +61,9 @@ router.post('/users', isAdminAuth, async (req, res) => {
         console.error(err)
         res.status(500).send('Ошибка при создании пользователя.')
     }
-})
+}
 
-router.put('/users/:id', isAdminAuth, async (req, res) => {
+export const updateUser = async function (req, res) {
     const { firstName, lastName, phone, password, role } = req.body
     let { id } = req.params
     id = Number(id)
@@ -137,6 +109,36 @@ router.put('/users/:id', isAdminAuth, async (req, res) => {
         console.error(err)
         res.status(500).send('Ошибка при обновлении пользователя.')
     }
-})
+}
 
-export default router
+export const deleteUser = async function (req, res) {
+    let { id } = req.params
+    id = Number(id)
+
+    if (isNaN(id)) {
+        return res.status(400).send('id должно быть числом.')
+    }
+
+    try {
+        const user = await prisma.user.findUnique({
+            where: {
+                id: id,
+            },
+        })
+
+        if (!user) {
+            return res.status(404).send(`Пользователь с id = ${id} не найден.`)
+        }
+
+        const deletedUser = await prisma.user.delete({
+            where: { id: id },
+        })
+        if (deletedUser) {
+            return res.status(204).send(`Пользователь с id = ${id} успешно удален.`)
+        }
+
+    } catch (err) {
+        console.error(err)
+        res.status(500).send('Ошибка при удалении пользователя.')
+    }
+}

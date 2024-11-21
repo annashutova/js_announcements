@@ -1,25 +1,7 @@
-import path from 'path'
-import { fileURLToPath } from 'url'
-import express from 'express'
 import prisma from '../db/client.js'
-import { checkAuth, isAdminAuth } from './auth.js'
-
-const router = express.Router()
-const __filename = fileURLToPath(import.meta.url)
-const __dirname = path.dirname(__filename)
 
 
-router.get('/categories', checkAuth, async (req, res) => {
-    try {
-        const categories = await prisma.category.findMany()
-        return res.json(categories)
-    } catch (err) {
-        console.error(err)
-        res.status(500).send('Ошибка при получении категорий.')
-    }
-})
-
-router.post('/categories', isAdminAuth, async (req, res) => {
+export const postCategory = async function (req, res) {
     const { title } = req.body
 
     try {
@@ -34,9 +16,9 @@ router.post('/categories', isAdminAuth, async (req, res) => {
         console.error(err)
         res.status(500).send('Ошибка при создании категории.')
     }
-})
+}
 
-router.put('/categories/:id', isAdminAuth, async (req, res) => {
+export const updateCategory = async function (req, res) {
     const { title } = req.body
     let { id } = req.params
     id = Number(id)
@@ -44,7 +26,6 @@ router.put('/categories/:id', isAdminAuth, async (req, res) => {
     if (isNaN(id)) {
         return res.status(400).send('id должно быть числом.')
     }
-
 
     try {
         await prisma.category.update({
@@ -61,9 +42,9 @@ router.put('/categories/:id', isAdminAuth, async (req, res) => {
         console.error(err)
         res.status(500).send('Ошибка при обновлении категории.')
     }
-})
+}
 
-router.delete('/categories/:id', isAdminAuth, async (req, res) => {
+export const deleteCategory = async function (req, res) {
     let { id } = req.params
     id = Number(id)
 
@@ -93,6 +74,4 @@ router.delete('/categories/:id', isAdminAuth, async (req, res) => {
         console.error(err)
         res.status(500).send('Ошибка при удалении категории.')
     }
-})
-
-export default router
+}
